@@ -1,0 +1,34 @@
+CREATE OR REPLACE FUNCTION consume_inventory_for_order(p_order_id UUID, p_warehouse_id UUID)
+RETURNS VOID AS $$
+DECLARE
+  r_item RECORD;
+  r_recipe RECORD;
+BEGIN
+  -- Evita doble consumo
+  PERFORM 1 FROM orders WHERE id = p_order_id AND inventory_consumed_at IS NOT NULL;
+  IF FOUND THEN
+    RETURN;
+  END IF;
+
+  FOR r_item IN
+    SELECT oi.id, oi.product_id, oi.qty
+    FROM order_items oi
+    WHERE oi.order_id = p_order_id
+  LOOP
+    FOR r_recipe IN
+      SELECT ri.ingredient_id, ri.qty AS recipe_qty
+      FROM recipes r
+      JOIN recipe_items ri ON ri.recipe_id = r.id
+      WHERE r.product_id = r_item.product_id
+    LOOP
+      INSERT INTO stock_moves (warehouse_id, ingredient_id, move, qty, reason, ref_table, ref_id)
+      VALUES (p_warehouse_id, r_recipe.ingredient_id, 'OUT', (r_item.qty * r_recipe.recipe_qty),
+              'SERVICE_CONSUMPTION', 'order_items', r_item.id);
+    END LOOP;
+  END LOOP;
+
+  UPDATE orders
+     SET inventory_consumed_at = now()
+   WHERE id = p_order_id;
+END;
+$$ LANGUAGE plpgsql;

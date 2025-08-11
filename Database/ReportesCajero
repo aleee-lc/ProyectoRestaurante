@@ -1,0 +1,29 @@
+--Reporte de Cajero
+CREATE OR REPLACE VIEW vw_cash_session_totals AS
+SELECT
+  cs.id AS cash_session_id,
+  cs.opened_at,
+  cs.closed_at,
+  p.method,
+  SUM(p.amount) AS amount,
+  SUM(p.tip)    AS tips
+FROM cash_sessions cs
+LEFT JOIN payments p ON p.cash_session_id = cs.id
+WHERE p.method IS DISTINCT FROM 'INTERNAL'
+GROUP BY cs.id, p.method;
+
+
+--Reporte de Consumos Internos
+
+CREATE OR REPLACE VIEW vw_internal_consumptions AS
+SELECT
+  o.id AS order_id,
+  o.closed_at,
+  o.total,
+  o.tip,
+  SUM(CASE WHEN sm.move='OUT' THEN sm.qty END) AS total_units_out
+FROM orders o
+LEFT JOIN stock_moves sm ON sm.ref_table='order_items' AND sm.move='OUT'
+  AND sm.ref_id IN (SELECT id FROM order_items WHERE order_id = o.id)
+WHERE o.kind = 'INTERNAL' AND o.status='CLOSED'
+GROUP BY o.id;

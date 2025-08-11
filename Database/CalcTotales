@@ -1,0 +1,25 @@
+CREATE OR REPLACE FUNCTION recalc_order_totals(p_order_id UUID)
+RETURNS VOID AS $$
+DECLARE
+  v_subtotal NUMERIC(12,2);
+  v_tax NUMERIC(12,2);
+  v_service NUMERIC(12,2);
+  v_tip NUMERIC(12,2);
+BEGIN
+  -- Subtotal = suma de líneas
+  SELECT COALESCE(SUM(line_total),0)
+    INTO v_subtotal
+  FROM order_items
+  WHERE order_id = p_order_id;
+
+  -- Impuesto y servicio: ya los guardas en la orden (ajústalo si los calculas distinto)
+  SELECT tax, service_fee, tip
+    INTO v_tax, v_service, v_tip
+  FROM orders WHERE id = p_order_id FOR UPDATE;
+
+  UPDATE orders
+     SET subtotal = v_subtotal,
+         total    = v_subtotal + COALESCE(v_tax,0) + COALESCE(v_service,0) + COALESCE(v_tip,0)
+   WHERE id = p_order_id;
+END;
+$$ LANGUAGE plpgsql;

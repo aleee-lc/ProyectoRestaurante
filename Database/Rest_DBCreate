@@ -1,0 +1,243 @@
+-- Enums
+CREATE TYPE order_status AS ENUM ('NEW','IN_KITCHEN','READY','SERVED','CANCELLED','CLOSED');
+CREATE TYPE move_type AS ENUM ('IN','OUT','ADJUST');
+CREATE TYPE payment_method AS ENUM ('CASH','CARD','TRANSFER','VOUCHER');
+
+-- Salón
+CREATE TABLE areas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE restaurant_tables (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  area_id UUID NOT NULL REFERENCES areas(id),
+  code TEXT NOT NULL,              -- ej: T1, B3
+  seats INT NOT NULL CHECK (seats > 0),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE (area_id, code),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE shifts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  starts_at TIMESTAMPTZ NOT NULL,
+  ends_at TIMESTAMPTZ,
+  created_by UUID,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE cash_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  shift_id UUID REFERENCES shifts(id),
+  user_id UUID,
+  opened_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  closed_at TIMESTAMPTZ,
+  opening_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  closing_amount NUMERIC(12,2),
+  notes TEXT
+);
+
+-- Menú y recetas
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID REFERENCES categories(id),
+  name TEXT NOT NULL,
+  sku TEXT UNIQUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  default_price NUMERIC(12,2) NOT NULL CHECK (default_price >= 0),
+  tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0, -- % IVA/ITBIS
+  print_station TEXT, -- cocina/bar/postres (para ruteo de impresión)
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE product_prices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id),
+  label TEXT NOT NULL, -- "happy hour", "terraza"
+  price NUMERIC(12,2) NOT NULL CHECK (price >= 0),
+  starts_at TIMESTAMPTZ,
+  ends_at TIMESTAMPTZ,
+  UNIQUE (product_id, label)
+);
+
+CREATE TABLE modifiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  price_delta NUMERIC(12,2) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE product_modifiers (
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  modifier_id UUID REFERENCES modifiers(id) ON DELETE CASCADE,
+  PRIMARY KEY (product_id, modifier_id)
+);
+
+CREATE TABLE ingredients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  unit TEXT NOT NULL  -- g, ml, pcs
+);
+
+CREATE TABLE recipes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL UNIQUE REFERENCES products(id),
+  yield_qty NUMERIC(14,4) NOT NULL DEFAULT 1
+);
+
+CREATE TABLE recipe_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  ingredient_id UUID NOT NULL REFERENCES ingredients(id),
+  qty NUMERIC(14,4) NOT NULL CHECK (qty > 0),
+  UNIQUE (recipe_id, ingredient_id)
+);
+
+-- Inventario y compras
+CREATE TABLE warehouses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE stock_items (
+  warehouse_id UUID REFERENCES warehouses(id) ON DELETE CASCADE,
+  ingredient_id UUID REFERENCES ingredients(id) ON DELETE CASCADE,
+  qty NUMERIC(14,4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (warehouse_id, ingredient_id)
+);
+
+CREATE TABLE stock_moves (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  warehouse_id UUID NOT NULL REFERENCES warehouses(id),
+  ingredient_id UUID NOT NULL REFERENCES ingredients(id),
+  move move_type NOT NULL,
+  qty NUMERIC(14,4) NOT NULL CHECK (qty > 0),
+  reason TEXT,
+  ref_table TEXT,   -- 'purchase_items', 'order_items' (consumo)
+  ref_id UUID,      -- para rastrear origen
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE suppliers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  email TEXT,
+  phone TEXT
+);
+
+CREATE TABLE purchase_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  supplier_id UUID REFERENCES suppliers(id),
+  warehouse_id UUID REFERENCES warehouses(id),
+  status TEXT NOT NULL DEFAULT 'OPEN', -- OPEN/RECEIVED/CANCELLED
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE purchase_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  purchase_id UUID REFERENCES purchase_orders(id) ON DELETE CASCADE,
+  ingredient_id UUID REFERENCES ingredients(id),
+  qty NUMERIC(14,4) NOT NULL CHECK (qty > 0),
+  unit_cost NUMERIC(12,4) NOT NULL CHECK (unit_cost >= 0),
+  line_total NUMERIC(12,2) GENERATED ALWAYS AS (qty * unit_cost) STORED
+);
+
+-- Clientes, reservas, pedidos
+CREATE TABLE customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  phone TEXT,
+  email TEXT
+);
+
+CREATE TABLE reservations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID REFERENCES customers(id),
+  starts_at TIMESTAMPTZ NOT NULL,
+  ends_at TIMESTAMPTZ NOT NULL,
+  people INT NOT NULL CHECK (people > 0),
+  status TEXT NOT NULL DEFAULT 'BOOKED' -- BOOKED/CHECKED_IN/CANCELLED/NO_SHOW
+);
+
+CREATE TABLE reservation_tables (
+  reservation_id UUID REFERENCES reservations(id) ON DELETE CASCADE,
+  table_id UUID REFERENCES restaurant_tables(id),
+  PRIMARY KEY (reservation_id, table_id)
+);
+
+CREATE TABLE orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  table_id UUID REFERENCES restaurant_tables(id),
+  customer_id UUID REFERENCES customers(id),
+  status order_status NOT NULL DEFAULT 'NEW',
+  subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+  tax NUMERIC(12,2) NOT NULL DEFAULT 0,
+  service_fee NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  opened_at TIMESTAMPTZ DEFAULT now(),
+  closed_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_orders_table_open ON orders(table_id) WHERE status <> 'CLOSED';
+
+CREATE TABLE order_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id),
+  qty NUMERIC(12,3) NOT NULL CHECK (qty > 0),
+  unit_price NUMERIC(12,2) NOT NULL,
+  line_total NUMERIC(12,2) GENERATED ALWAYS AS (qty * unit_price) STORED,
+  notes TEXT
+);
+
+CREATE TABLE order_item_modifiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_item_id UUID NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
+  modifier_id UUID NOT NULL REFERENCES modifiers(id),
+  price_delta NUMERIC(12,2) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE order_status_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  status order_status NOT NULL,
+  changed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  changed_by UUID
+);
+
+-- Pagos
+CREATE TABLE payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  method payment_method NOT NULL,
+  amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+  tip NUMERIC(12,2) NOT NULL DEFAULT 0,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cash_session_id UUID REFERENCES cash_sessions(id),
+  ref TEXT -- last4, folio, etc.
+);
+
+CREATE TABLE payment_allocations (
+  payment_id UUID REFERENCES payments(id) ON DELETE CASCADE,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+  applied_amount NUMERIC(12,2) NOT NULL CHECK (applied_amount > 0),
+  PRIMARY KEY (payment_id, order_id)
+);
+
+-- Usuarios (mínimo)
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  password_hash TEXT NOT NULL,
+  is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);

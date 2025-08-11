@@ -1,0 +1,27 @@
+-- 1) Propina en la orden (se suma al total al cerrar)
+ALTER TABLE orders
+  ADD COLUMN tip NUMERIC(12,2) NOT NULL DEFAULT 0;
+
+-- 2) Tipo de orden: regular o consumo interno
+ALTER TABLE orders
+  ADD COLUMN kind TEXT NOT NULL DEFAULT 'REGULAR'
+  CHECK (kind IN ('REGULAR','INTERNAL'));
+
+-- 3) Marcar si ya se consumió inventario (evita doble descuento)
+ALTER TABLE orders
+  ADD COLUMN inventory_consumed_at TIMESTAMPTZ;
+
+-- 4) Método de pago: agregar INTERNAL (para cerrar sin afectar caja real)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type t
+    JOIN pg_enum e ON t.oid = e.enumtypid
+    WHERE t.typname = 'payment_method' AND e.enumlabel = 'INTERNAL'
+  ) THEN
+    ALTER TYPE payment_method ADD VALUE 'INTERNAL';
+  END IF;
+END$$;
+
+-- 5) Índices útiles
+CREATE INDEX IF NOT EXISTS idx_orders_kind_status ON orders(kind, status);
