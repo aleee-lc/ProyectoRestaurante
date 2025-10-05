@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Areas {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String             @unique
+  created_at        DateTime?          @default(now()) @db.Timestamptz(6)
+  restaurant_tables RestaurantTables[]
+
+  @@map("areas")
+}
+
+model CashSessions {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shift_id       String?    @db.Uuid
+  user_id        String?    @db.Uuid
+  opened_at      DateTime   @default(now()) @db.Timestamptz(6)
+  closed_at      DateTime?  @db.Timestamptz(6)
+  opening_amount Decimal    @default(0) @db.Decimal(12, 2)
+  closing_amount Decimal?   @db.Decimal(12, 2)
+  notes          String?
+  shifts         Shifts?    @relation(fields: [shift_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payments       Payments[]
+
+  @@map("cash_sessions")
+}
+
+model Categories {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String     @unique
+  created_at DateTime?  @default(now()) @db.Timestamptz(6)
+  products   Products[]
+
+  @@map("categories")
+}
+
+model Customers {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  phone        String?
+  email        String?
+  orders       Orders[]
+  reservations Reservations[]
+
+  @@map("customers")
+}
+
+model Ingredients {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String          @unique
+  unit           String
+  purchase_items PurchaseItems[]
+  recipe_items   RecipeItems[]
+  stock_items    StockItems[]
+  stock_moves    StockMoves[]
+
+  @@map("ingredients")
+}
+
+model Modifiers {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String
+  price_delta          Decimal              @default(0) @db.Decimal(12, 2)
+  order_item_modifiers OrderItemModifiers[]
+  product_modifiers    ProductModifiers[]
+
+  @@map("modifiers")
+}
+
+model OrderItemModifiers {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_item_id String     @db.Uuid
+  modifier_id   String     @db.Uuid
+  price_delta   Decimal    @default(0) @db.Decimal(12, 2)
+  modifiers     Modifiers  @relation(fields: [modifier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_items   OrderItems @relation(fields: [order_item_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("order_item_modifiers")
+}
+
+model OrderItems {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id             String               @db.Uuid
+  product_id           String               @db.Uuid
+  qty                  Decimal              @db.Decimal(12, 3)
+  unit_price           Decimal              @db.Decimal(12, 2)
+  line_total           Decimal?             @db.Decimal(12, 2)
+  notes                String?
+  order_item_modifiers OrderItemModifiers[]
+  orders               Orders               @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products             Products             @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id   String       @db.Uuid
+  status     order_status
+  changed_at DateTime     @default(now()) @db.Timestamptz(6)
+  changed_by String?      @db.Uuid
+  orders     Orders       @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("order_status_history")
+}
+
+model Orders {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  table_id              String?              @db.Uuid
+  customer_id           String?              @db.Uuid
+  status                order_status         @default(NEW)
+  subtotal              Decimal              @default(0) @db.Decimal(12, 2)
+  tax                   Decimal              @default(0) @db.Decimal(12, 2)
+  service_fee           Decimal              @default(0) @db.Decimal(12, 2)
+  total                 Decimal              @default(0) @db.Decimal(12, 2)
+  opened_at             DateTime?            @default(now()) @db.Timestamptz(6)
+  closed_at             DateTime?            @db.Timestamptz(6)
+  kind                  String               @default("REGULAR")
+  inventory_consumed_at DateTime?            @db.Timestamptz(6)
+  order_items           OrderItems[]
+  order_status_history  OrderStatusHistory[]
+  customers             Customers?           @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant_tables     RestaurantTables?    @relation(fields: [table_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payment_allocations   PaymentAllocations[]
+
+  @@index([kind, status], map: "idx_orders_kind_status")
+  @@map("orders")
+}
+
+model PaymentAllocations {
+  payment_id     String   @db.Uuid
+  order_id       String   @db.Uuid
+  applied_amount Decimal  @db.Decimal(12, 2)
+  orders         Orders   @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  payments       Payments @relation(fields: [payment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([payment_id, order_id])
+  @@map("payment_allocations")
+}
+
+model Payments {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  method              payment_method
+  amount              Decimal              @db.Decimal(12, 2)
+  tip                 Decimal              @default(0) @db.Decimal(12, 2)
+  received_at         DateTime             @default(now()) @db.Timestamptz(6)
+  cash_session_id     String?              @db.Uuid
+  ref                 String?
+  payment_allocations PaymentAllocations[]
+  cash_sessions       CashSessions?        @relation(fields: [cash_session_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("payments")
+}
+
+model ProductModifiers {
+  product_id  String    @db.Uuid
+  modifier_id String    @db.Uuid
+  modifiers   Modifiers @relation(fields: [modifier_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products    Products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([product_id, modifier_id])
+  @@map("product_modifiers")
+}
+
+model ProductPrices {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id String    @db.Uuid
+  label      String
+  price      Decimal   @db.Decimal(12, 2)
+  starts_at  DateTime? @db.Timestamptz(6)
+  ends_at    DateTime? @db.Timestamptz(6)
+  products   Products  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([product_id, label])
+  @@map("product_prices")
+}
+
+model Products {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id       String?            @db.Uuid
+  name              String
+  sku               String?            @unique
+  is_active         Boolean            @default(true)
+  default_price     Decimal            @db.Decimal(12, 2)
+  tax_rate          Decimal            @default(0) @db.Decimal(5, 2)
+  print_station     String?
+  created_at        DateTime?          @default(now()) @db.Timestamptz(6)
+  order_items       OrderItems[]
+  product_modifiers ProductModifiers[]
+  product_prices    ProductPrices[]
+  categories        Categories?        @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recipes           Recipes?
+
+  @@map("products")
+}
+
+model PurchaseItems {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchase_id     String?         @db.Uuid
+  ingredient_id   String?         @db.Uuid
+  qty             Decimal         @db.Decimal(14, 4)
+  unit_cost       Decimal         @db.Decimal(12, 4)
+  line_total      Decimal?        @default(dbgenerated("(qty * unit_cost)")) @db.Decimal(12, 2)
+  ingredients     Ingredients?    @relation(fields: [ingredient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchase_orders PurchaseOrders? @relation(fields: [purchase_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("purchase_items")
+}
+
+model PurchaseOrders {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplier_id    String?         @db.Uuid
+  warehouse_id   String?         @db.Uuid
+  status         String          @default("OPEN")
+  total          Decimal         @default(0) @db.Decimal(12, 2)
+  created_at     DateTime?       @default(now()) @db.Timestamptz(6)
+  purchase_items PurchaseItems[]
+  suppliers      Suppliers?      @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouses     Warehouses?     @relation(fields: [warehouse_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("purchase_orders")
+}
+
+model RecipeItems {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipe_id     String      @db.Uuid
+  ingredient_id String      @db.Uuid
+  qty           Decimal     @db.Decimal(14, 4)
+  ingredients   Ingredients @relation(fields: [ingredient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recipes       Recipes     @relation(fields: [recipe_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([recipe_id, ingredient_id])
+  @@map("recipe_items")
+}
+
+model Recipes {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id   String        @unique @db.Uuid
+  yield_qty    Decimal       @default(1) @db.Decimal(14, 4)
+  recipe_items RecipeItems[]
+  products     Products      @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("recipes")
+}
+
+model ReservationTables {
+  reservation_id    String           @db.Uuid
+  table_id          String           @db.Uuid
+  reservations      Reservations     @relation(fields: [reservation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  restaurant_tables RestaurantTables @relation(fields: [table_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([reservation_id, table_id])
+  @@map("reservation_tables")
+}
+
+model Reservations {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id        String?             @db.Uuid
+  starts_at          DateTime            @db.Timestamptz(6)
+  ends_at            DateTime            @db.Timestamptz(6)
+  people             Int
+  status             String              @default("BOOKED")
+  reservation_tables ReservationTables[]
+  customers          Customers?          @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("reservations")
+}
+
+model RestaurantTables {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  area_id            String              @db.Uuid
+  code               String
+  seats              Int
+  is_active          Boolean             @default(true)
+  created_at         DateTime?           @default(now()) @db.Timestamptz(6)
+  orders             Orders[]
+  reservation_tables ReservationTables[]
+  areas              Areas               @relation(fields: [area_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([area_id, code])
+  @@map("restaurant_tables")
+}
+
+model Shifts {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  starts_at     DateTime       @db.Timestamptz(6)
+  ends_at       DateTime?      @db.Timestamptz(6)
+  created_by    String?        @db.Uuid
+  created_at    DateTime?      @default(now()) @db.Timestamptz(6)
+  cash_sessions CashSessions[]
+
+  @@map("shifts")
+}
+
+model StockItems {
+  warehouse_id  String      @db.Uuid
+  ingredient_id String      @db.Uuid
+  qty           Decimal     @default(0) @db.Decimal(14, 4)
+  ingredients   Ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  warehouses    Warehouses  @relation(fields: [warehouse_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([warehouse_id, ingredient_id])
+  @@map("stock_items")
+}
+
+model StockMoves {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  warehouse_id  String      @db.Uuid
+  ingredient_id String      @db.Uuid
+  move          move_type
+  qty           Decimal     @db.Decimal(14, 4)
+  reason        String?
+  ref_table     String?
+  ref_id        String?     @db.Uuid
+  created_at    DateTime?   @default(now()) @db.Timestamptz(6)
+  ingredients   Ingredients @relation(fields: [ingredient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouses    Warehouses  @relation(fields: [warehouse_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("stock_moves")
+}
+
+model Suppliers {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String           @unique
+  email           String?
+  phone           String?
+  purchase_orders PurchaseOrders[]
+
+  @@map("suppliers")
+}
+
+model Users {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  email         String?   @unique
+  password_hash String
+  is_admin      Boolean   @default(false)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+model Warehouses {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String           @unique
+  purchase_orders PurchaseOrders[]
+  stock_items     StockItems[]
+  stock_moves     StockMoves[]
+
+  @@map("warehouses")
+}
+
+enum move_type {
+  IN
+  OUT
+  ADJUST
+}
+
+enum order_status {
+  NEW
+  IN_KITCHEN
+  READY
+  SERVED
+  CANCELLED
+  CLOSED
+}
+
+enum payment_method {
+  CASH
+  CARD
+  TRANSFER
+  VOUCHER
+  INTERNAL
+}
