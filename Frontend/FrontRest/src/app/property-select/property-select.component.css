@@ -1,0 +1,75 @@
+.wrapper {
+  min-height: 100vh;
+  background-color: #0a0908;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eae0d5;
+  font-family: "Inter", sans-serif;
+}
+
+.card {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+.icon {
+  background-color: #22333b;
+  display: inline-flex;
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.material-icons {
+  font-size: 28px;
+  color: #c6ac8f;
+}
+
+.property-list {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.property {
+  background-color: #22333b;
+  border: 1px solid rgba(198, 172, 143, 0.2);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.property:hover {
+  background-color: #5e503f;
+}
+
+.property-icon {
+  background-color: #0a0908;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #eae0d5;
+}
+
+.info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #c6ac8f;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

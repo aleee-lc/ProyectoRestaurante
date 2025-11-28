@@ -1,0 +1,41 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-icon">
+        <span class="material-icons">receipt_long</span>
+      </div>
+      <h1>RestoFlow</h1>
+      <p>POS SYSTEM FOR RESTAURANTS AT HOTELS</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()">
+      <label>Email</label>
+      <div class="input-group">
+        <span class="material-icons">person</span>
+        <input
+          type="email"
+          placeholder="tu@hotel.com"
+          [(ngModel)]="email"
+          name="email"
+          required
+        />
+      </div>
+
+      <label>Contraseña</label>
+      <div class="input-group">
+        <span class="material-icons">lock</span>
+        <input
+          type="password"
+          placeholder="********"
+          [(ngModel)]="password"
+          name="password"
+          required
+        />
+      </div>
+
+      <button type="submit">Iniciar Sesión</button>
+
+      <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
+    </form>
+  </div>
+</div>
