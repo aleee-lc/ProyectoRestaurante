@@ -1,0 +1,175 @@
+<div class="cajero-wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <button class="back-btn" (click)="goBack()">
+      <span class="material-icons">arrow_back</span>
+    </button>
+
+    <div class="title-group">
+      <h2>Cajero</h2>
+      <p>Restaurante</p>
+    </div>
+
+    <div class="pendientes">1 pendientes</div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-bar">
+    <span class="material-icons">search</span>
+    <input
+      type="text"
+      placeholder="Buscar por cliente, mesa o habitación..."
+      [value]="search()"
+      (input)="onSearchInput($event)"
+    />
+  </div>
+
+  <!-- FILTER ESTADO -->
+  <div class="estado-tabs">
+    <button
+      [class.active]="filtroEstado() === 'Todos'"
+      (click)="setEstado('Todos')"
+    >
+      Todos
+    </button>
+
+    <button
+      [class.active]="filtroEstado() === 'Listo'"
+      (click)="setEstado('Listo')"
+    >
+      Listo
+    </button>
+
+    <button
+      [class.active]="filtroEstado() === 'Pagado'"
+      (click)="setEstado('Pagado')"
+    >
+      Pagado
+    </button>
+  </div>
+
+  <!-- ÁREA TABS -->
+  <div class="area-tabs">
+    <button
+      [class.active]="filtroArea() === 'Comedor'"
+      (click)="setArea('Comedor')"
+    >
+      <span class="material-icons">restaurant_menu</span>
+      Comedor
+    </button>
+
+    <button
+      [class.active]="filtroArea() === 'Room Service'"
+      (click)="setArea('Room Service')"
+    >
+      <span class="material-icons">room_service</span>
+      Room Service
+    </button>
+
+    <button
+      [class.active]="filtroArea() === 'Delivery'"
+      (click)="setArea('Delivery')"
+    >
+      <span class="material-icons">delivery_dining</span>
+      Delivery
+    </button>
+  </div>
+
+  <!-- LISTA DE ÓRDENES -->
+  <div class="order-list">
+    <div class="order-card" *ngFor="let o of filteredOrders()" (click)="openPayment(o)">
+      <div class="left">
+        <div class="order-id">{{ o.id }}</div>
+        <div>
+          <h3>{{ o.cliente }}</h3>
+          <p>{{ o.mesa }}</p>
+          <p class="productos">{{ o.productos }} productos</p>
+          <p class="hora">{{ o.hora }}</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="estado-badges">
+          <span class="badge listo" *ngIf="o.estado === 'Listo'">Listo</span>
+          <span class="badge pendiente" *ngIf="o.estado === 'Pendiente Pago'">
+            Pendiente Pago
+          </span>
+          <span class="badge pagado" *ngIf="o.estado === 'Pagado'">Pagado</span>
+        </div>
+
+        <div class="total">
+          ${{ o.total | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL PROCESAR PAGO ===================== -->
+<div class="modal-backdrop" *ngIf="showPaymentModal()">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h2>Procesar Pago</h2>
+      <span class="material-icons close" (click)="closePayment()">close</span>
+    </div>
+
+    <p class="subtitle">Complete los datos para procesar el pago de la orden</p>
+
+    <div class="modal-section">
+      <h3>Orden #{{ selectedOrder()?.id }}</h3>
+      <p>{{ selectedOrder()?.cliente }}</p>
+      <p>{{ selectedOrder()?.mesa }}</p>
+    </div>
+
+    <div class="modal-section">
+      <h4>Productos</h4>
+
+      <div class="product-row">
+        <span>2x Hamburguesa Clásica</span>
+        <span>$25.98</span>
+      </div>
+
+      <div class="product-row">
+        <span>1x Papas Fritas</span>
+        <span>$4.99</span>
+      </div>
+
+      <div class="product-row">
+        <span>2x Coca Cola</span>
+        <span>$5.98</span>
+      </div>
+
+      <div class="subtotal-row">
+        <span>Subtotal</span>
+        <span>${{ selectedOrder()?.total }}</span>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <label>Propina (opcional)</label>
+      <input type="number" placeholder="0.00" />
+    </div>
+
+    <div class="modal-section">
+      <label>Método de Pago</label>
+      <select>
+        <option>Efectivo</option>
+        <option>Tarjeta</option>
+        <option>Cargo a Habitación</option>
+        <option>Transferencia</option>
+      </select>
+    </div>
+
+    <div class="modal-footer">
+      <div class="total-label">Total a Pagar</div>
+      <div class="total-amount">${{ selectedOrder()?.total }}</div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn ghost" (click)="closePayment()">Cancelar</button>
+      <button class="btn primary">Procesar Pago</button>
+    </div>
+  </div>
+</div>

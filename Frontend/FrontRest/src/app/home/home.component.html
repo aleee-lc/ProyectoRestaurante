@@ -1,0 +1,96 @@
+<div class="home-wrapper">
+  <header class="top-bar">
+    <div class="user-info">
+      <div class="avatar">{{ user?.email.charAt(0).toUpperCase() }}</div>
+      <div class="user-text">
+        <h3>¡Hola, {{ user?.email.split('@')[0] }}!</h3>
+        <p>Mesero Principal</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <span class="material-icons">notifications</span>
+      <span class="material-icons" (click)="logout()">logout</span>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="property-card">
+      <div class="icon">
+        <span class="material-icons">apartment</span>
+      </div>
+      <div>
+        <h3>{{ property?.name || 'Sin propiedad activa' }}</h3>
+        <p>{{ property?.location || 'No asignada' }}</p>
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="stat">
+        <h2>24</h2>
+        <p>Órdenes Hoy</p>
+      </div>
+      <div class="stat">
+        <h2>$1,250</h2>
+        <p>Ventas</p>
+      </div>
+    </section>
+
+    <h4 class="menu-title">Menú Principal</h4>
+
+    <section class="menu">
+        <!-- MESERO -->
+        <div class="menu-item" (click)="goToMesero()">
+            <span class="material-icons">restaurant_menu</span>
+            <div>
+                <h3>Mesero</h3>
+                <p>Gestionar órdenes activas y crear nuevas</p>
+            </div>
+        </div>
+
+    <div class="menu-item" (click)="goToCajero()">
+        <span class="material-icons">point_of_sale</span>
+        <div>
+            <h3>Cajero</h3>
+            <p>Gestionar pagos y caja</p>
+        </div>
+    </div>
+
+      <div class="menu-item">
+        <span class="material-icons">assessment</span>
+        <div>
+          <h3>reportes</h3>
+          <p>Reportería del sistema</p>
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <span class="material-icons">admin_panel_settings</span>
+        <div>
+          <h3>Administración</h3>
+          <p>Gestión del sistema</p>
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <span class="material-icons">assignment</span>
+        <div>
+          <h3>Órdenes</h3>
+          <p>Ver historial y reportes</p>
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <span class="material-icons">settings</span>
+        <div>
+          <h3>Configuración</h3>
+          <p>Ajustes del sistema</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>HotelPOS v3.0.0</p>
+    </footer>
+  </main>
+</div>

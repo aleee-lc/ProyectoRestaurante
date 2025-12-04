@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './property-select.component.html',
-  styleUrls: ['./property-select.component.css']
+  styleUrls: ['./property-select.component.css'],
 })
 export class PropertySelectComponent {
   properties = [
@@ -19,7 +19,9 @@ export class PropertySelectComponent {
   constructor(private router: Router) {}
 
   selectProperty(p: any) {
+    console.log('Propiedad seleccionada:', p);
     localStorage.setItem('selectedProperty', JSON.stringify(p));
+    console.log('➡️ Navegando a /home...');
     this.router.navigate(['/home']);
   }
 }

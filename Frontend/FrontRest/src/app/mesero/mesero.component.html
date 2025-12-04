@@ -1,0 +1,206 @@
+<div class="mesero-wrapper">
+  <!-- Header -->
+  <div class="header">
+    <div class="left">
+      <button type="button" class="back-btn" (click)="goBack()" aria-label="Volver">
+        <span class="material-icons back">arrow_back</span>
+      </button>
+      <div>
+        <h2>Mesero</h2>
+        <p>Restaurante</p>
+      </div>
+    </div>
+
+    <button class="new-order" (click)="openNewOrder()">
+      <span class="material-icons">add</span>
+      Nueva Orden
+    </button>
+  </div>
+
+  <!-- Buscador -->
+  <div class="search-bar">
+    <span class="material-icons">search</span>
+    <input type="text" placeholder="Buscar órdenes..." />
+  </div>
+
+  <!-- Mini Tabs -->
+  <div class="subtabs">
+    <button
+      [class.active]="activeTab() === 'activas'"
+      (click)="setTab('activas')"
+    >
+      Activas
+    </button>
+    <button
+      [class.active]="activeTab() === 'completadas'"
+      (click)="setTab('completadas')"
+    >
+      Completadas
+    </button>
+  </div>
+
+  <!-- Lista de Órdenes -->
+  <div class="orders-list">
+    <div class="order-card" *ngFor="let o of filteredOrders()">
+      <div class="left">
+        <div class="order-id">{{ o.id }}</div>
+        <div class="info">
+          <h3>{{ o.cliente }}</h3>
+          <p>{{ o.mesa }} • {{ o.area }} • {{ o.comensales }} comensales</p>
+          <p class="sub">
+            {{ o.productos }} productos • ${{ o.total | number:'1.2-2' }}
+            <span class="material-icons time">schedule</span> {{ o.hora }}
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="status"
+        [class.prep]="o.estado === 'Preparando'"
+        [class.pend]="o.estado === 'Pendiente'"
+      >
+        {{ o.estado }}
+      </div>
+
+      <div class="actions">
+        <button class="btn small">
+          <span class="material-icons">visibility</span> Ver
+        </button>
+        <button class="btn small">
+          <span class="material-icons">edit</span> Estado
+        </button>
+        <button class="btn small">
+          <span class="material-icons">add</span> Modificar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== MODAL NUEVA ORDEN =========== -->
+<div class="modal-backdrop" *ngIf="showNewOrder()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2>Nueva Orden</h2>
+        <p>Cree una nueva orden seleccionando productos del menú</p>
+      </div>
+      <span class="material-icons close" (click)="closeNewOrder()">close</span>
+    </div>
+
+    <div class="modal-body">
+      <!-- Columna izquierda -->
+      <div class="col-left">
+        <label>
+          <span>Cliente</span>
+          <input
+            type="text"
+            placeholder="Nombre del cliente"
+            [value]="newOrder().cliente"
+            (input)="onClienteInput($event)"
+          />
+        </label>
+
+        <label>
+          <span>Tipo de Servicio</span>
+          <select
+            [value]="newOrder().tipoServicio"
+            (change)="onTipoServicioChange($event)"
+          >
+            <option value="Comedor">Comedor</option>
+            <option value="Terraza">Terraza</option>
+            <option value="Room Service">Room Service</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Mesa</span>
+          <input
+            type="text"
+            placeholder="Seleccione una mesa"
+            [value]="newOrder().mesa"
+            (input)="onMesaInput($event)"
+          />
+        </label>
+
+        <label>
+          <span>Número de Comensales</span>
+          <input
+            type="number"
+            min="1"
+            [value]="newOrder().comensales"
+            (input)="onComensalesInput($event)"
+          />
+        </label>
+
+        <label>
+          <span>Notas</span>
+          <textarea
+            rows="3"
+            placeholder="Notas especiales..."
+            [value]="newOrder().notas"
+            (input)="onNotasInput($event)"
+          ></textarea>
+        </label>
+
+        <div class="order-summary" *ngIf="newOrder().items.length > 0">
+          <h4>Productos seleccionados</h4>
+
+          <div
+            class="selected-item"
+            *ngFor="let item of newOrder().items"
+          >
+            <div>
+              {{ item.qty }}x {{ item.product.name }}
+              <div class="price-line">
+                ${{ item.product.price | number:'1.2-2' }} c/u
+              </div>
+            </div>
+            <div class="qty-buttons">
+              <button (click)="changeQty(item, -1)">-</button>
+              <button (click)="changeQty(item, 1)">+</button>
+            </div>
+          </div>
+
+          <div class="total-line">
+            <span>Total</span>
+            <span>${{ newOrderTotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="col-right">
+        <div class="menu-header">
+          <h4>Menú</h4>
+          <input type="text" placeholder="Buscar productos..." />
+        </div>
+
+        <div class="menu-list">
+          <div
+            class="menu-card"
+            *ngFor="let p of menuProducts()"
+          >
+            <div>
+              <h3>{{ p.name }}</h3>
+              <p>{{ p.desc }}</p>
+              <span class="price">
+                ${{ p.price | number:'1.2-2' }} • {{ p.category }}
+              </span>
+            </div>
+            <button class="add-btn" (click)="addProductToOrder(p)">
+              <span class="material-icons">add</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn ghost" (click)="closeNewOrder()">Cancelar</button>
+      <button class="btn primary" (click)="createOrder()">
+        Crear Orden
+      </button>
+    </div>
+  </div>
+</div>
