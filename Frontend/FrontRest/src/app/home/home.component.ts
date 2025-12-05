@@ -38,4 +38,8 @@ export class HomeComponent implements OnInit {
   goToCajero() {
     this.router.navigate(['/cajero']);      
   }
+
+  goToReporteria() {
+    this.router.navigate(['/reporteria']);      
+  } 
 }

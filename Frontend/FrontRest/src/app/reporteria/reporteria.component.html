@@ -1,0 +1,263 @@
+<div class="report-container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <button class="icon-btn" (click)="goBack()">
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <div>
+        <h1>Administración</h1>
+        <p>Restaurante</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Filtro de rango -->
+      <select class="range-select" (change)="setRango($event)">
+        <option value="hoy">Hoy</option>
+        <option value="semana" selected>Esta Semana</option>
+        <option value="mes">Este Mes</option>
+        <option value="personalizado">Personalizado</option>
+      </select>
+
+      <!-- Fechas cuando es personalizado -->
+      <div class="date-range" *ngIf="rango() === 'personalizado'">
+        <input type="date" (change)="setFechaInicio($event)" />
+        <span>—</span>
+        <input type="date" (change)="setFechaFin($event)" />
+      </div>
+
+      <!-- Export botones -->
+      <button class="ghost-btn" (click)="exportCSV()">CSV</button>
+      <button class="ghost-btn" (click)="exportExcel()">Excel</button>
+      <button (click)="exportPDFTable()" class="btn primary"> Exportar PDF </button>
+
+    </div>
+  </div>
+
+  <!-- SUBTÍTULO -->
+  <div class="subtitle-block">
+    <h3>Reportería y Análisis</h3>
+    <p>Visualice el desempeño de su negocio</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi-card">
+      <p class="label">Ventas Totales</p>
+      <p class="value">${{ totalVentas() }}</p>
+      <p class="delta">+12.5% vs semana anterior</p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="label">Órdenes</p>
+      <p class="value">{{ totalOrdenes() }}</p>
+      <p class="delta">+8.3% vs semana anterior</p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="label">Ticket Promedio</p>
+      <p class="value">${{ ticketPromedio() | number:'1.2-2' }}</p>
+      <p class="delta">+3.6% vs semana anterior</p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="label">Propinas</p>
+      <p class="value">${{ totalPropinas() }}</p>
+      <p class="delta">+15.2% vs semana anterior</p>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'diario'"
+      (click)="setTab('diario')"
+    >
+      Ventas Diarias
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'producto'"
+      (click)="setTab('producto')"
+    >
+      Por Producto
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'mesero'"
+      (click)="setTab('mesero')"
+    >
+      Por Mesero
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'area'"
+      (click)="setTab('area')"
+    >
+      Por Área
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'horas'"
+      (click)="setTab('horas')"
+    >
+      Mapa de Horas
+    </button>
+  </div>
+
+  <!-- CONTENIDO TABS -->
+  <div class="content-card">
+
+    <!-- Ventas Diarias -->
+    <ng-container *ngIf="activeTab() === 'diario'">
+      <apx-chart
+        [series]="dailyChartOptions.series"
+        [chart]="dailyChartOptions.chart"
+        [xaxis]="dailyChartOptions.xaxis"
+        [stroke]="dailyChartOptions.stroke"
+        [theme]="dailyChartOptions.theme"
+        [dataLabels]="dailyChartOptions.dataLabels"
+        [legend]="dailyChartOptions.legend"
+        [grid]="dailyChartOptions.grid"
+      ></apx-chart>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Ventas</th>
+            <th>Órdenes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of ventasDiarias()">
+            <td>{{ d.fecha }}</td>
+            <td>${{ d.ventas }}</td>
+            <td>{{ d.ordenes }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+
+    <!-- Por Producto -->
+    <ng-container *ngIf="activeTab() === 'producto'">
+      <apx-chart
+        [series]="productChartOptions.series"
+        [chart]="productChartOptions.chart"
+        [xaxis]="productChartOptions.xaxis"
+        [theme]="productChartOptions.theme"
+        [plotOptions]="productChartOptions.plotOptions"
+        [grid]="productChartOptions.grid"
+        [dataLabels]="productChartOptions.dataLabels"
+      ></apx-chart>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Ventas</th>
+            <th>Órdenes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of porProducto()">
+            <td>{{ d.producto }}</td>
+            <td>${{ d.ventas }}</td>
+            <td>{{ d.ordenes }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+
+    <!-- Por Mesero -->
+    <ng-container *ngIf="activeTab() === 'mesero'">
+      <apx-chart
+        [series]="meseroChartOptions.series"
+        [chart]="meseroChartOptions.chart"
+        [xaxis]="meseroChartOptions.xaxis"
+        [theme]="meseroChartOptions.theme"
+        [plotOptions]="meseroChartOptions.plotOptions"
+        [grid]="meseroChartOptions.grid"
+        [dataLabels]="meseroChartOptions.dataLabels"
+      ></apx-chart>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Mesero</th>
+            <th>Ventas</th>
+            <th>Órdenes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of porMesero()">
+            <td>{{ d.mesero }}</td>
+            <td>${{ d.ventas }}</td>
+            <td>{{ d.ordenes }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+
+    <!-- Por Área -->
+    <ng-container *ngIf="activeTab() === 'area'">
+      <div class="donut-wrapper">
+        <apx-chart
+          [series]="areaChartOptions.series"
+          [chart]="areaChartOptions.chart"
+          [labels]="areaChartOptions.labels"
+          [theme]="areaChartOptions.theme"
+          [legend]="areaChartOptions.legend"
+        ></apx-chart>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Área</th>
+            <th>Ventas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of porArea()">
+            <td>{{ d.area }}</td>
+            <td>${{ d.ventas }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+
+    <!-- Mapa de Horas -->
+    <ng-container *ngIf="activeTab() === 'horas'">
+      <apx-chart
+        [series]="hoursHeatmapOptions.series"
+        [chart]="hoursHeatmapOptions.chart"
+        [dataLabels]="hoursHeatmapOptions.dataLabels"
+        [theme]="hoursHeatmapOptions.theme"
+        [xaxis]="hoursHeatmapOptions.xaxis"
+        [grid]="hoursHeatmapOptions.grid"
+      ></apx-chart>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Día</th>
+            <th>Hora</th>
+            <th>Órdenes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of heatmapData()">
+            <td>{{ d.dia }}</td>
+            <td>{{ d.hora }}</td>
+            <td>{{ d.valor }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+
+  </div>
+</div>

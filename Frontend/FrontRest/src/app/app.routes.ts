@@ -5,6 +5,7 @@ import { PropertySelectComponent } from './property-select/property-select.compo
 import { HomeComponent } from './home/home.component';
 import { MeseroComponent } from './mesero/mesero.component';
 import { CajeroComponent } from './cajero/cajero.component';
+import { ReporteriaComponent } from './reporteria/reporteria.component';  
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -17,7 +18,9 @@ export const routes: Routes = [
   // Módulos
   { path: 'mesero', component: MeseroComponent },
   { path: 'cajero', component: CajeroComponent },
+  { path: 'reporteria', component: ReporteriaComponent },
 
   // Fallback
   { path: '**', redirectTo: 'login' },
+
 ];
