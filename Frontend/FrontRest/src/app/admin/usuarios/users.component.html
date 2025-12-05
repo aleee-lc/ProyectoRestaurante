@@ -1,0 +1,34 @@
+<div class="users-header">
+  <h2>Gestión de Usuarios</h2>
+  <button class="btn-primary" (click)="openCreateModal()">+ Nuevo Usuario</button>
+</div>
+
+<input
+  class="search-input"
+  placeholder="Buscar usuarios..."
+  [(ngModel)]="searchTerm"
+/>
+
+<div class="user-list">
+  <div class="user-card" *ngFor="let u of filterUsers()">
+    <div class="avatar">{{ u.name.charAt(0).toUpperCase() }}</div>
+
+    <div class="info">
+      <p class="name">{{ u.name }}</p>
+      <p class="email">{{ u.email }}</p>
+
+      <div class="chips">
+        <span class="chip" *ngFor="let r of u.roles" [ngClass]="getRoleClass(r)">
+          {{ r }}
+        </span>
+
+        <span class="chip inactive" *ngIf="!u.is_active">Inactivo</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <span class="material-icons edit">edit</span>
+      <span class="material-icons delete" (click)="deleteUser(u.id)">delete</span>
+    </div>
+  </div>
+</div>

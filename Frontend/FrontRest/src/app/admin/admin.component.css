@@ -1,0 +1,54 @@
+.admin-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #fff;
+  padding: 20px;
+  font-family: Inter, sans-serif;
+}
+
+/* NAV superior */
+.admin-nav {
+  display: flex;
+  background: #1b1b1b;
+  padding: 10px;
+  border-radius: 50px;
+  justify-content: space-around;
+  margin-bottom: 25px;
+}
+
+.nav-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  transition: 0.2s ease;
+  color: #bbb;
+}
+
+.nav-item span {
+  font-size: 20px;
+}
+
+.nav-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.nav-item:hover {
+  background: #2b2b2b;
+  color: white;
+}
+
+/* Cuando está activa */
+.nav-item.active {
+  background: #ffffff12;
+  color: white;
+}
+
+/* Contenido interno */
+.admin-content {
+  margin-top: 10px;
+}

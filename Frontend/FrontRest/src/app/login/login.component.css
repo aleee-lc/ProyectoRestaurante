@@ -146,3 +146,16 @@ button:hover {
     font-size: 1.5rem;
   }
 }
+
+/* Estilo del mensaje de error */
+.error-box {  
+  background-color: #ffdddd;
+  color: #a94442;
+  border: 1px solid #a94442;
+  border-radius: 0.5rem;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+} 

@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -13,29 +14,42 @@ import { Router } from '@angular/router';
 export class LoginComponent {
   email = '';
   password = '';
+  loading = false;
+  errorMsg = '';
 
-  constructor(private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
   onSubmit() {
-    if (this.email === 'ale@ale.com' && this.password === '1234') {
-      const user = {
-        email: this.email,
-        multiProperty: true, // cámbialo a false si tiene una sola propiedad
-        defaultProperty: null, // o define algo como { id: 1, name: 'Restaurante' }
-      };
+    this.errorMsg = '';
+    this.loading = true;
 
-      localStorage.setItem('user', JSON.stringify(user));
+    this.auth.login(this.email, this.password).subscribe({
+      next: (res) => {
+      this.loading = false;
 
-      if (user.multiProperty || !user.defaultProperty) {
-        console.log('➡️ Redirigiendo a selección de propiedad...');
-        this.router.navigate(['/select-property']);
-      } else {
-        console.log('➡️ Redirigiendo a home...');
-        localStorage.setItem('selectedProperty', JSON.stringify(user.defaultProperty));
-        this.router.navigate(['/home']);
+      const user = res.user;
+      const props = user.properties;
+
+      if (!props || props.length === 0) {
+        this.errorMsg = 'El usuario no tiene propiedades asignadas.';
+        return;
       }
-    } else {
-      alert('Correo o contraseña incorrectos');
-    }
+
+      if (props.length === 1) {
+        // SOLO UNA PROPERTY → entra directo
+        localStorage.setItem('current_property', props[0].id);
+        this.router.navigate(['/home']);
+      } else {
+        // VARIAS PROPERTIES → pantalla para elegir
+        this.router.navigate(['/property-select']);
+      }
+      },
+
+      error: (err) => {
+      console.log("🔥 ERROR FULL:", err);
+      this.loading = false;
+      this.errorMsg = err.error?.error || "Credenciales incorrectas";
+      },
+    });
   }
 }

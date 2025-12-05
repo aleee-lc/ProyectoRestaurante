@@ -4,7 +4,7 @@
       <div class="avatar">{{ user?.email.charAt(0).toUpperCase() }}</div>
       <div class="user-text">
         <h3>¡Hola, {{ user?.email.split('@')[0] }}!</h3>
-        <p>Mesero Principal</p>
+        <p>{{ role }}</p>
       </div>
     </div>
 
@@ -21,7 +21,7 @@
       </div>
       <div>
         <h3>{{ property?.name || 'Sin propiedad activa' }}</h3>
-        <p>{{ property?.location || 'No asignada' }}</p>
+        <p>ID: {{ property?.id }}</p>
       </div>
     </section>
 
@@ -39,32 +39,32 @@
     <h4 class="menu-title">Menú Principal</h4>
 
     <section class="menu">
-        <!-- MESERO -->
-        <div class="menu-item" (click)="goToMesero()">
-            <span class="material-icons">restaurant_menu</span>
-            <div>
-                <h3>Mesero</h3>
-                <p>Gestionar órdenes activas y crear nuevas</p>
-            </div>
-        </div>
 
-    <div class="menu-item" (click)="goToCajero()">
+      <div class="menu-item" (click)="goToMesero()">
+        <span class="material-icons">restaurant_menu</span>
+        <div>
+          <h3>Mesero</h3>
+          <p>Gestionar órdenes activas y crear nuevas</p>
+        </div>
+      </div>
+
+      <div class="menu-item" (click)="goToCajero()">
         <span class="material-icons">point_of_sale</span>
         <div>
-            <h3>Cajero</h3>
-            <p>Gestionar pagos y caja</p>
+          <h3>Cajero</h3>
+          <p>Gestionar pagos y caja</p>
         </div>
-    </div>
+      </div>
 
       <div class="menu-item" (click)="goToReporteria()">
         <span class="material-icons">assessment</span>
         <div>
-          <h3>reportes</h3>
-          <p>Reportería del sistema</p>
+          <h3>Reportería</h3>
+          <p>Reportes del sistema</p>
         </div>
       </div>
 
-      <div class="menu-item">
+      <div class="menu-item" (click)="goToAdmin()">
         <span class="material-icons">admin_panel_settings</span>
         <div>
           <h3>Administración</h3>
@@ -87,6 +87,7 @@
           <p>Ajustes del sistema</p>
         </div>
       </div>
+
     </section>
 
     <footer>

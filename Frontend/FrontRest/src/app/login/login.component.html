@@ -9,6 +9,13 @@
     </div>
 
     <form (ngSubmit)="onSubmit()">
+
+      <!-- Mensaje de error -->
+      <div *ngIf="errorMsg" class="error-box">
+         {{ errorMsg }}
+      </div>
+
+
       <label>Email</label>
       <div class="input-group">
         <span class="material-icons">person</span>

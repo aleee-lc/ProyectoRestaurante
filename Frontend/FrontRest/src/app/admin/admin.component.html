@@ -1,0 +1,42 @@
+<div class="admin-wrapper">
+
+  <!-- NAV SUPERIOR -->
+  <nav class="admin-nav">
+
+
+    <div class="nav-item"
+         [class.active]="activeTab('usuarios')"
+         (click)="goTo('usuarios')">
+      <span class="material-icons">group</span>
+      <p>Usuarios</p>
+    </div>
+
+    <div class="nav-item"
+         [class.active]="activeTab('productos')"
+         (click)="goTo('productos')">
+      <span class="material-icons">inventory_2</span>
+      <p>Productos</p>
+    </div>
+
+    <div class="nav-item"
+         [class.active]="activeTab('mesas')"
+         (click)="goTo('mesas')">
+      <span class="material-icons">restaurant</span>
+      <p>Mesas</p>
+    </div>
+
+    <div class="nav-item"
+         [class.active]="activeTab('areas')"
+         (click)="goTo('areas')">
+      <span class="material-icons">grid_view</span>
+      <p>Áreas</p>
+    </div>
+
+  </nav>
+
+  <!-- CONTENIDO DE CADA SECCIÓN -->
+  <div class="admin-content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

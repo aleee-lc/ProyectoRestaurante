@@ -1,0 +1,109 @@
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.btn-primary {
+  background: #ffffff20;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid #ffffff30;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-card {
+  background: #161616;
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  background: #222;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.info {
+  flex: 1;
+  margin-left: 14px;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.email {
+  font-size: 13px;
+  color: #bbb;
+}
+
+.chips {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.chip {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: white;
+}
+
+.chip-admin {
+  background: #7a41e8;
+}
+
+.chip-mesero {
+  background: #4368f1;
+}
+
+.chip-cajero {
+  background: #2eb36a;
+}
+
+.chip-cocina {
+  background: #d47d1f;
+}
+
+.inactive {
+  background: #666;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.edit,
+.delete {
+  cursor: pointer;
+  color: #aaa;
+}
+
+.delete:hover {
+  color: #ff4f4f;
+}

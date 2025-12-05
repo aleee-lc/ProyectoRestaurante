@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router } from '@angular/router'
+
 
 @Component({
   selector: 'app-home',
@@ -9,20 +10,29 @@ import { Router } from '@angular/router';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent {
   user: any = null;
   property: any = null;
+  role: string = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) {
+    const storedUser = localStorage.getItem('user');
+    const storedProperty = localStorage.getItem('current_property');
 
-  ngOnInit() {
-    // Authentication is handled by the authGuard. Here we only read stored
-    // values to initialize component state.
-    const savedUser = localStorage.getItem('user');
-    const savedProperty = localStorage.getItem('selectedProperty');
+    if (storedUser) {
+      this.user = JSON.parse(storedUser);
 
-    this.user = savedUser ? JSON.parse(savedUser) : null;
-    this.property = savedProperty ? JSON.parse(savedProperty) : null;
+      // Guarda el PRIMER rol del usuario
+      this.role = this.user.roles?.[0] || 'Sin rol';
+    }
+
+    if (storedProperty) {
+      this.property = {
+        id: storedProperty,
+        name: this.user?.properties?.find((p: any) => p.id === storedProperty)?.name
+          || "Propiedad seleccionada"
+      };
+    }
   }
 
   logout() {
@@ -30,16 +40,19 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-
   goToMesero() {
-    this.router.navigate(['/mesero']);      
+    this.router.navigate(['/mesero']);
   }
 
   goToCajero() {
-    this.router.navigate(['/cajero']);      
+    this.router.navigate(['/cajero']);
   }
 
   goToReporteria() {
-    this.router.navigate(['/reporteria']);      
-  } 
+    this.router.navigate(['/reporteria']);
+  }
+
+  goToAdmin() {
+    this.router.navigate(['/admin']);
+  }
 }
