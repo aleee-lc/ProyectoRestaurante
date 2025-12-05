@@ -2,11 +2,6 @@ import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
-(pdfMake as any).vfs = (pdfFonts as any).vfs || (pdfFonts as any).pdfMake?.vfs;
-
-
 
 type Rango = 'hoy' | 'semana' | 'mes' | 'personalizado';
 type Tab = 'diario' | 'producto' | 'mesero' | 'area' | 'horas';
@@ -321,85 +316,4 @@ get areaChartOptions() {
         return { header: [], rows: [] };
     }
   }
-  exportPDFTable() {
-  const data = this.ventasDiarias();
-
-  const tableBody = [
-    [
-      { text: 'Fecha', style: 'tableHeader' },
-      { text: 'Ventas', style: 'tableHeader' },
-      { text: 'Órdenes', style: 'tableHeader' }
-    ],
-    ...data.map(row => [
-      row.fecha,
-      `$${row.ventas}`,
-      row.ordenes
-    ])
-  ];
-
-  const docDefinition: any = {
-    pageSize: 'A4',
-    pageMargins: [30, 40, 30, 40],
-
-    content: [
-      {
-        text: 'Reporte de Ventas',
-        style: 'title',
-        margin: [0, 0, 0, 10]
-      },
-      {
-        text: `Generado el: ${new Date().toLocaleDateString()}`,
-        style: 'date',
-        margin: [0, 0, 0, 20]
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', '*', '*'],
-          body: tableBody
-        },
-        layout: {
-          fillColor: function (rowIndex: number) {
-            return rowIndex === 0 ? '#111' : null;
-          },
-          hLineColor: '#333',
-          vLineColor: '#333',
-          paddingLeft: 8,
-          paddingRight: 8,
-          paddingTop: 6,
-          paddingBottom: 6,
-        }
-      }
-    ],
-
-    styles: {
-      title: {
-        fontSize: 18,
-        bold: true,
-        color: '#000',
-      },
-      date: {
-        fontSize: 10,
-        color: '#555',
-      },
-      tableHeader: {
-        bold: true,
-        color: '#fff',
-        fillColor: '#000'
-      }
-    },
-
-    footer: function (currentPage: number, pageCount: number) {
-      return {
-        text: `Página ${currentPage} de ${pageCount}`,
-        alignment: 'center',
-        margin: [0, 10, 0, 0],
-        color: '#555'
-      };
-    }
-  };
-
-  (pdfMake as any).createPdf(docDefinition).download('reporte.pdf');
-}
-
 }
